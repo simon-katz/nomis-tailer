@@ -1,4 +1,4 @@
-(defproject nomis-tailer "0.1.0-SNAPSHOT"
+(defproject com.nomistech/nomis-tailer "0.1.0"
   :description "A Clojure implementation of tail -F and more"
   :url "https://github.com/simon-katz/nomis-tailer"
   :license {:name "Eclipse Public License"

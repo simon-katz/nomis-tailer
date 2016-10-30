@@ -68,20 +68,20 @@
 (defn make-multi-tailer-and-channel [dir pattern delay-ms]
   (let [out-ch     (a/chan)
         control-ch (a/chan)]
-    (a/go
-      (letfn [(get-most-recent-file []
-                (most-recent-file-matching-pattern dir pattern))
-              (new-t-and-c [most-recent-file first?]
-                (let [t-and-c
-                      (make-tailer-and-channel-impl most-recent-file
-                                                    delay-ms
-                                                    first?)]
-                  (a/go-loop []
-                    (let [v (a/<! (channel t-and-c))]
-                      (when v
-                        (a/>! out-ch v)
-                        (recur))))
-                  t-and-c))]
+    (letfn [(get-most-recent-file []
+              (most-recent-file-matching-pattern dir pattern))
+            (new-t-and-c [most-recent-file first?]
+              (let [t-and-c
+                    (make-tailer-and-channel-impl most-recent-file
+                                                  delay-ms
+                                                  first?)]
+                (a/go-loop []
+                  (let [v (a/<! (channel t-and-c))]
+                    (when v
+                      (a/>! out-ch v)
+                      (recur))))
+                t-and-c))]
+      (a/go
         (let [outer-delay-ms         1000 ; TODO OK? Make this an arg.
               first-most-recent-file (get-most-recent-file)]
           (let [first-t-and-c (when first-most-recent-file
@@ -89,11 +89,11 @@
                                              true))]
             (loop [most-recent-file first-most-recent-file
                    t-and-c          first-t-and-c]
-              (a/<!! (a/timeout outer-delay-ms))
-              (let [[v ch] (a/alts!! [control-ch
-                                      (a/timeout 1000 ; TODO
-                                                 )]
-                                     :priority true)]
+              (a/<! (a/timeout outer-delay-ms))
+              (let [[v ch] (a/alts! [control-ch
+                                     (a/timeout 1000 ; TODO
+                                                )]
+                                    :priority true)]
                 (if (= v :stop)
                   (when t-and-c
                     (close! t-and-c))                  

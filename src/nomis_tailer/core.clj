@@ -29,18 +29,28 @@
     {::channel ch
      ::tailer  tailer}))
 
-(defn make-tailer-and-channel [file delay-ms]
+(defn make-tailer-and-channel
+  "Returns a so-called tailer-and-channel for `file` with the supplied
+  `delay-ms`.
+  See org.apache.commons.io.input.Tailer for details of `delay-ms`. "
+  [file delay-ms]
   (make-tailer-and-channel-impl file delay-ms true))
 
-(defn channel [t-and-c]
+(defn channel
+  "Returns this tailer-and-channel's channel -- take from this to get
+  lines from the file."
+  [t-and-c]
   (::channel t-and-c))
 
-(defn close-tailer-and-channel! [{:keys [::channel ::tailer]}]
+(defn close-tailer-and-channel!
+  "Stops/closes this tailer-and-channel's Tailer and channel."
+  [{:keys [::channel ::tailer]}]
   (.stop tailer)
   (a/close! channel))
 
-(defn ^:private files-in-dir-matching-pattern [dir pattern]
+(defn ^:private files-in-dir-matching-pattern
   "A sequence of files in dir"
+  [dir pattern]
   (->> dir
        .listFiles
        (filter (fn [x] (.isFile x)))
@@ -65,7 +75,11 @@
                   files-and-last-mod-times))
     most-recent-file))
 
-(defn make-multi-tailer-and-channel [dir pattern delay-ms file-change-delay-ms]
+(defn make-multi-tailer-and-channel
+  "Like `make-tailer-and-channel`, but looks for the most recent file in `dir`
+  that matches `pattern`. Looks for new files every `file-change-delay-ms`.
+  Returns a so-called multi-tailer-and-channel."
+  [dir pattern delay-ms file-change-delay-ms]
   (let [out-ch     (a/chan)
         control-ch (a/chan)]
     (letfn [(get-most-recent-file []
@@ -113,7 +127,9 @@
     {::channel out-ch
      ::control-ch control-ch}))
 
-(defn close-multi-tailer-and-channel! [mt-and-c]
+(defn close-multi-tailer-and-channel!
+  "Stops/closes this multi-tailer-and-channel's Tailer and channel."
+  [mt-and-c]
   (a/>!! (::control-ch mt-and-c)
          :stop)
   (a/close! (::channel mt-and-c)))

@@ -20,11 +20,12 @@
      (throw e))))
 
 (defn make-tailer-and-channel [file delay-ms]
-  (let [ch     (a/chan)
-        tailer (Tailer/create file
-                              (tailer-listener ch)
-                              delay-ms
-                              true)]
+  (let [ch        (a/chan)
+        from-end? true
+        tailer    (Tailer/create file
+                                 (tailer-listener ch)
+                                 delay-ms
+                                 from-end?)]
     {::channel ch
      ::tailer  tailer}))
 

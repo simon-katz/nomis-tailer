@@ -5,7 +5,9 @@
 
 (defn ^:private tailer-listener [c]
   (reify TailerListener
-    (init [this tailer] ())
+    (init [this tailer]
+      ;; no-op
+      )
     (fileNotFound [this]
       ;; (println "File not found")
       )
@@ -18,12 +20,12 @@
      (throw e))))
 
 (defn make-tailer-and-channel [file delay-ms]
-  (let [c      (a/chan)
+  (let [ch     (a/chan)
         tailer (Tailer/create file
-                              (tailer-listener c)
+                              (tailer-listener ch)
                               delay-ms
                               true)]
-    {::channel c
+    {::channel ch
      ::tailer  tailer}))
 
 (defn channel [t-and-c]

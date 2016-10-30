@@ -5,10 +5,14 @@
             [nomis-tailer.core :refer :all])
   (:import (java.io File)))
 
-(defn spit-lines-s [f lines-s sleep-ms]
+(defn do-pretend-logging-with-rotation
+  "Send lines to `f` in a manner that is similar to the way logging happens."
+  ;; When making changes here, think about `sleep-ms` and how it relates to
+  ;; the underlying TailerListener's delay-ms.
+  [f lines-s sleep-ms]
   (Thread/sleep sleep-ms)
   (doseq [lines lines-s]
-    (spit f "")
+    (spit f "") ; rotate
     (doseq [line lines]
       (spit f
             (str line "\n")
@@ -40,7 +44,7 @@
                         f)               
             t-and-c   (make-tailer-and-channel file delay-ms)
             result-ch (a/thread (doall (tailer-and-channel->seq t-and-c)))]
-        (spit-lines-s file lines-s sleep-ms)
+        (do-pretend-logging-with-rotation file lines-s sleep-ms)
         (stop-tailer-and-channel! t-and-c)
         (a/<!! result-ch)
         => ["I met" "her" "in a" "pool room" "her name" "I didn't" "catch"

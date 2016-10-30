@@ -65,7 +65,7 @@
                               ["1-3" "2-3" "3-3" "4-3" "5-3"]]
         modify-lines-s       (fn [prefix]
                                (map (fn [lines]
-                                      (map #(str prefix " " %)
+                                      (map #(str prefix %)
                                            lines))
                                     basic-lines-s))
         file-1               (make-and-initialise-log-file
@@ -80,25 +80,21 @@
         result-ch            (a/thread (doall (-> mt-and-c
                                                   subject/channel
                                                   chan->seq)))]
-    (do-pretend-logging-with-rotation file-1
-                                      (modify-lines-s "1:")
-                                      sleep-ms)
-    (Thread/sleep rollover-delay-ms)
-    (doseq [i [2 3]]
+    (doseq [i ["a" "b" "c"]]
       (let [file (make-and-initialise-log-file
                   (str "test/_work-dir/plopplop-" i ".log"))]
         (do-pretend-logging-with-rotation file
-                                          (modify-lines-s (str i ":"))
+                                          (modify-lines-s (str i "-"))
                                           sleep-ms)
         (Thread/sleep rollover-delay-ms)))
     (subject/close-mt-and-c! mt-and-c)
     (a/<!! result-ch))
-  => ["1: 1-1" "1: 2-1" "1: 3-1" "1: 4-1" "1: 5-1"
-      "1: 1-2" "1: 2-2" "1: 3-2" "1: 4-2" "1: 5-2"
-      "1: 1-3" "1: 2-3" "1: 3-3" "1: 4-3" "1: 5-3"
-      "2: 1-1" "2: 2-1" "2: 3-1" "2: 4-1" "2: 5-1"
-      "2: 1-2" "2: 2-2" "2: 3-2" "2: 4-2" "2: 5-2"
-      "2: 1-3" "2: 2-3" "2: 3-3" "2: 4-3" "2: 5-3"
-      "3: 1-1" "3: 2-1" "3: 3-1" "3: 4-1" "3: 5-1"
-      "3: 1-2" "3: 2-2" "3: 3-2" "3: 4-2" "3: 5-2"
-      "3: 1-3" "3: 2-3" "3: 3-3" "3: 4-3" "3: 5-3"])
+  => ["a-1-1" "a-2-1" "a-3-1" "a-4-1" "a-5-1"
+      "a-1-2" "a-2-2" "a-3-2" "a-4-2" "a-5-2"
+      "a-1-3" "a-2-3" "a-3-3" "a-4-3" "a-5-3"
+      "b-1-1" "b-2-1" "b-3-1" "b-4-1" "b-5-1"
+      "b-1-2" "b-2-2" "b-3-2" "b-4-2" "b-5-2"
+      "b-1-3" "b-2-3" "b-3-3" "b-4-3" "b-5-3"
+      "c-1-1" "c-2-1" "c-3-1" "c-4-1" "c-5-1"
+      "c-1-2" "c-2-2" "c-3-2" "c-4-2" "c-5-2"
+      "c-1-3" "c-2-3" "c-3-3" "c-4-3" "c-5-3"])

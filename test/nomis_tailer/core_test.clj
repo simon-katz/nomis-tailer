@@ -23,8 +23,8 @@
    (when-let [v (a/<!! c)]
      (cons v (chan->seq c)))))
 
-(fact (let [delay-ms  100
-            sleep-ms  (+ delay-ms 10)
+(fact (let [delay-ms  50
+            sleep-ms  100
             lines-s   [["I met" "her" "in a" "pool room"]
                        ["her name" "I didn't" "catch"]
                        ["she" "looked" "like" "something special"]]

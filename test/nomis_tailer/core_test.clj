@@ -59,6 +59,7 @@
   (let [delay-ms             50
         sleep-ms             100
         file-change-delay-ms 300
+        rollover-delay-ms    500
         basic-lines-s        [["1-1" "2-1" "3-1" "4-1" "5-1"]
                               ["1-2" "2-2" "3-2" "4-2" "5-2"]
                               ["1-3" "2-3" "3-3" "4-3" "5-3"]]
@@ -82,14 +83,14 @@
     (do-pretend-logging-with-rotation file-1
                                       (modify-lines-s "1:")
                                       sleep-ms)
-    (Thread/sleep 500)
+    (Thread/sleep rollover-delay-ms)
     (doseq [i [2 3]]
       (let [file (make-and-initialise-log-file
                   (str "test/_work-dir/plopplop-" i ".log"))]
         (do-pretend-logging-with-rotation file
                                           (modify-lines-s (str i ":"))
                                           sleep-ms)
-        (Thread/sleep 500)))
+        (Thread/sleep rollover-delay-ms)))
     (subject/close-mt-and-c! mt-and-c)
     (a/<!! result-ch))
   => ["1: 1-1" "1: 2-1" "1: 3-1" "1: 4-1" "1: 5-1"

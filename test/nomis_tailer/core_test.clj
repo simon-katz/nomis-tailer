@@ -23,19 +23,21 @@
    (when-let [v (a/<!! c)]
      (cons v (chan->seq c)))))
 
+(defn make-and-initialise-log-file [filename]
+  (let [f (File. filename)]
+    ;; Setting up some initial content makes things work as I expect;
+    ;; without this my first line is lost.
+    ;; jsk-2016-10-29
+    (io/make-parents f)
+    (spit f "this will be ignored this will be ignored this will be ignored this will be ignored\n")
+    f))
+
 (fact (let [delay-ms  50
             sleep-ms  100
             lines-s   [["I met" "her" "in a" "pool room"]
                        ["her name" "I didn't" "catch"]
                        ["she" "looked" "like" "something special"]]
-            file      (let [f (File. "test/_work-dir/plop.log")]
-                        ;; Setting up some initial content makes things
-                        ;; work as I expect; without this my first line
-                        ;; is lost.
-                        ;; jsk-2016-10-29
-                        (io/make-parents f)
-                        (spit f "this will be ignored this will be ignored this will be ignored this will be ignored\n")
-                        f)               
+            file      (make-and-initialise-log-file "test/_work-dir/plop.log")
             t-and-c   (subject/make-tailer-and-channel file delay-ms)
             result-ch (a/thread (doall (-> t-and-c
                                            subject/channel

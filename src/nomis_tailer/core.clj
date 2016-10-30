@@ -46,7 +46,7 @@
        (filter (fn [x] (.isFile x)))
        (filter #(re-matches pattern (.getName %)))))
 
-(defn most-recent-file-matching-pattern [dir pattern]
+(defn ^:private most-recent-file-matching-pattern [dir pattern]
   (let [files-and-last-mod-times (let [fs (files-in-dir-matching-pattern dir
                                                                          pattern)]
                                    (map (fn [f] [f

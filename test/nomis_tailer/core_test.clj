@@ -33,7 +33,7 @@
         lines-s           [["1-1" "2-1" "3-1" "4-1" "5-1"]
                            ["1-2" "2-2" "3-2" "4-2" "5-2"]
                            ["1-3" "2-3" "3-3" "4-3" "5-3"]]
-        file              (File. "test/_work-dir/plop.log")
+        file              (File. "test/_work-dir/single-filename-test.log")
         t-and-c           (subject/make-tailer-and-channel file
                                                            delay-ms)
         result-ch         (a/thread (doall (-> t-and-c
@@ -60,7 +60,7 @@
                                                lines))
                                         basic-lines-s))
         dir                      (File. "test/_work-dir")
-        pattern                  #"plopplop-.\.log"
+        pattern                  #"multi-filename-test-.\.log"
         mt-and-c                 (subject/make-multi-tailer-and-channel
                                   dir
                                   pattern
@@ -70,7 +70,7 @@
                                                       subject/channel
                                                       chan->seq)))]
     (doseq [i ["a" "b" "c"]]
-      (let [file (File. (str "test/_work-dir/plopplop-" i ".log"))]
+      (let [file (File. (str "test/_work-dir/multi-filename-test-" i ".log"))]
         (do-pretend-logging-with-rotation file
                                           (modify-lines-s (str i "-"))
                                           rollover-delay-ms)

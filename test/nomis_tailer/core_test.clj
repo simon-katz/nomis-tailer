@@ -10,7 +10,6 @@
   ;; When making changes here, think about `sleep-ms` and how it relates to
   ;; the underlying TailerListener's delay-ms.
   [f lines-s sleep-ms]
-  (Thread/sleep sleep-ms)
   (doseq [lines lines-s]
     (spit f "") ; rotate
     (doseq [line lines]

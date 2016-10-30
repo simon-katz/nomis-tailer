@@ -102,6 +102,9 @@
                       (recur most-recent-file
                              t-and-c)
                       (do (when t-and-c
+                            ;; Give time to finish tailing the previous file
+                            ;; before closing the channel.
+                            (a/<! (a/timeout file-change-delay-ms))
                             (close! t-and-c))
                           (let [next-t-and-c (new-t-and-c next-most-recent-file
                                                           false)]

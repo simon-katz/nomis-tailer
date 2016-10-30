@@ -1,5 +1,6 @@
 (ns nomis-tailer.core
-  (:require [clojure.core.async :as a])
+  (:require [clojure.core.async :as a]
+            [nomis-tailer.files :as files])
   (:import (org.apache.commons.io.input Tailer
                                         TailerListener)))
 
@@ -48,33 +49,6 @@
   (.stop tailer)
   (a/close! channel))
 
-(defn ^:private files-in-dir-matching-pattern
-  "A sequence of files in dir"
-  [dir pattern]
-  (->> dir
-       .listFiles
-       (filter (fn [x] (.isFile x)))
-       (filter #(re-matches pattern (.getName %)))))
-
-(defn ^:private most-recent-file-matching-pattern [dir pattern]
-  (let [files-and-last-mod-times (let [fs (files-in-dir-matching-pattern dir
-                                                                         pattern)]
-                                   (map (fn [f] [f
-                                                 (.lastModified f)])
-                                        fs))
-        [most-recent-file _] (if (empty? files-and-last-mod-times)
-                               nil
-                               (reduce (fn [[f1 m1] [f2 m2]]
-                                         (if (> m1 m2)
-                                           [f1 m1]
-                                           [f2 m2]))
-                                       files-and-last-mod-times))]
-    #_(println "files-and-last-mod-times ="
-             (map (fn [x] [(.getName (first x))
-                           (second x)])
-                  files-and-last-mod-times))
-    most-recent-file))
-
 (defn make-multi-tailer-and-channel
   "Like `make-tailer-and-channel`, but looks for the most recent file in `dir`
   that matches `pattern`. Looks for new files every `file-change-delay-ms`.
@@ -83,7 +57,7 @@
   (let [out-ch     (a/chan)
         control-ch (a/chan)]
     (letfn [(get-most-recent-file []
-              (most-recent-file-matching-pattern dir pattern))
+              (files/most-recent-file-matching-pattern dir pattern))
             (new-t-and-c [most-recent-file first?]
               (let [t-and-c
                     (make-tailer-and-channel-impl most-recent-file

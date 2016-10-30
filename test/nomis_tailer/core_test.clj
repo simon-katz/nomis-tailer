@@ -40,7 +40,6 @@
                                                subject/channel
                                                chan->seq)))]
     (do-pretend-logging-with-rotation file lines-s rollover-delay-ms)
-    (Thread/sleep 500)
     (subject/close! t-and-c)
     (a/<!! result-ch))
   => ["1-1" "2-1" "3-1" "4-1" "5-1"

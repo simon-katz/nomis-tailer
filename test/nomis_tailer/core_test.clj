@@ -44,7 +44,7 @@
             t-and-c   (make-tailer-and-channel file delay-ms)
             result-ch (a/thread (doall (tailer-and-channel->seq t-and-c)))]
         (do-pretend-logging-with-rotation file lines-s sleep-ms)
-        (stop-tailer-and-channel! t-and-c)
+        (close! t-and-c)
         (a/<!! result-ch)
         => ["I met" "her" "in a" "pool room" "her name" "I didn't" "catch"
             "she" "looked" "like" "something special"]))

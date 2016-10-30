@@ -31,6 +31,6 @@
 (defn channel [t-and-c]
   (::channel t-and-c))
 
-(defn stop-tailer-and-channel! [{:keys [::channel ::tailer]}]
+(defn close! [{:keys [::channel ::tailer]}]
   (.stop tailer)
   (a/close! channel))

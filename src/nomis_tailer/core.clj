@@ -93,11 +93,12 @@
                                     :priority true)]
                 (if (= v :stop)
                   (when t-and-c
-                    (close! t-and-c))                  
-                  (let [next-most-recent-file (get-most-recent-file)]
-                    (if (or (nil? most-recent-file)
-                            (= next-most-recent-file
-                               most-recent-file))
+                    (close! t-and-c))
+                  (let [next-most-recent-file (get-most-recent-file)
+                        new-file-to-process? (and (not (nil? most-recent-file))
+                                                  (not= next-most-recent-file
+                                                        most-recent-file))]
+                    (if-not new-file-to-process?
                       ;; just leave things as they are
                       (recur most-recent-file
                              t-and-c)

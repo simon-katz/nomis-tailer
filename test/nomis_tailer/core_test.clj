@@ -82,13 +82,14 @@
     (do-pretend-logging-with-rotation file-1
                                       (modify-lines-s "1:")
                                       sleep-ms)
-    (Thread/sleep 4000)
-    (let [file-2 (make-and-initialise-log-file
-                  "test/_work-dir/plopplop-2.log")]
-      (do-pretend-logging-with-rotation file-2
-                                        (modify-lines-s "2:")
-                                        sleep-ms)
-      (Thread/sleep 2000))
+    (Thread/sleep 500)
+    (doseq [i [2 3]]
+      (let [file (make-and-initialise-log-file
+                  (str "test/_work-dir/plopplop-" i ".log"))]
+        (do-pretend-logging-with-rotation file
+                                          (modify-lines-s (str i ":"))
+                                          sleep-ms)
+        (Thread/sleep 500)))
     (subject/close-mt-and-c! mt-and-c)
     (a/<!! result-ch))
   => ["1: 1-1" "1: 2-1" "1: 3-1" "1: 4-1" "1: 5-1"
@@ -96,4 +97,7 @@
       "1: 1-3" "1: 2-3" "1: 3-3" "1: 4-3" "1: 5-3"
       "2: 1-1" "2: 2-1" "2: 3-1" "2: 4-1" "2: 5-1"
       "2: 1-2" "2: 2-2" "2: 3-2" "2: 4-2" "2: 5-2"
-      "2: 1-3" "2: 2-3" "2: 3-3" "2: 4-3" "2: 5-3"])
+      "2: 1-3" "2: 2-3" "2: 3-3" "2: 4-3" "2: 5-3"
+      "3: 1-1" "3: 2-1" "3: 3-1" "3: 4-1" "3: 5-1"
+      "3: 1-2" "3: 2-2" "3: 3-2" "3: 4-2" "3: 5-2"
+      "3: 1-3" "3: 2-3" "3: 3-3" "3: 4-3" "3: 5-3"])

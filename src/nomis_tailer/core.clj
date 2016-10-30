@@ -86,31 +86,30 @@
           (let [first-t-and-c (when first-most-recent-file
                                 (new-t-and-c first-most-recent-file
                                              true))]
-            (loop [most-recent-file first-most-recent-file
-                   t-and-c          first-t-and-c]
+            (loop [prev-most-recent-file first-most-recent-file
+                   prev-t-and-c          first-t-and-c]
               (let [[v ch] (a/alts! [control-ch
                                      (a/timeout file-change-delay-ms)]
                                     :priority true)]
                 (if (= v :stop)
-                  (when t-and-c
-                    (close! t-and-c))
-                  (let [next-most-recent-file (get-most-recent-file)
-                        new-file-to-process? (and (not (nil? most-recent-file))
-                                                  (not= next-most-recent-file
-                                                        most-recent-file))]
+                  (when prev-t-and-c
+                    (close! prev-t-and-c))
+                  (let [most-recent-file     (get-most-recent-file)
+                        new-file-to-process? (and most-recent-file
+                                                  (not= most-recent-file
+                                                        prev-most-recent-file))]
                     (if-not new-file-to-process?
                       ;; just leave things as they are
-                      (recur most-recent-file
-                             t-and-c)
-                      (do (when t-and-c
+                      (recur prev-most-recent-file
+                             prev-t-and-c)
+                      (do (when prev-t-and-c
                             ;; Give time to finish tailing the previous file
                             ;; before closing the channel.
                             (a/<! (a/timeout file-change-delay-ms))
-                            (close! t-and-c))
-                          (let [next-t-and-c (new-t-and-c next-most-recent-file
-                                                          false)]
-                            (recur next-most-recent-file
-                                   next-t-and-c))))))))))))
+                            (close! prev-t-and-c))
+                          (recur most-recent-file
+                                 (new-t-and-c most-recent-file
+                                              false))))))))))))
     {::channel out-ch
      ::control-ch control-ch}))
 

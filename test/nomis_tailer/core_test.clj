@@ -56,30 +56,33 @@
       "1-3" "2-3" "3-3" "4-3" "5-3"])
 
 (fact "`make-multi-tailer-and-channel` works"
-  (let [delay-ms      50
-        sleep-ms      100
-        basic-lines-s [["1-1" "2-1" "3-1" "4-1" "5-1"]
-                       ["1-2" "2-2" "3-2" "4-2" "5-2"]
-                       ["1-3" "2-3" "3-3" "4-3" "5-3"]]
-        modify-lines-s (fn [prefix]
-                         (map (fn [lines]
-                                (map #(str prefix " " %)
-                                     lines))
-                              basic-lines-s))
-        file-1        (make-and-initialise-log-file
-                       "test/_work-dir/plopplop-1.log")
-        dir           (File. "test/_work-dir")
-        pattern       #"plopplop-.\.log"
-        mt-and-c      (subject/make-multi-tailer-and-channel dir
-                                                             pattern
-                                                             delay-ms)
-        result-ch     (a/thread (doall (-> mt-and-c
-                                           subject/channel
-                                           chan->seq)))]
+  (let [delay-ms             50
+        sleep-ms             100
+        file-change-delay-ms 300
+        basic-lines-s        [["1-1" "2-1" "3-1" "4-1" "5-1"]
+                              ["1-2" "2-2" "3-2" "4-2" "5-2"]
+                              ["1-3" "2-3" "3-3" "4-3" "5-3"]]
+        modify-lines-s       (fn [prefix]
+                               (map (fn [lines]
+                                      (map #(str prefix " " %)
+                                           lines))
+                                    basic-lines-s))
+        file-1               (make-and-initialise-log-file
+                              "test/_work-dir/plopplop-1.log")
+        dir                  (File. "test/_work-dir")
+        pattern              #"plopplop-.\.log"
+        mt-and-c             (subject/make-multi-tailer-and-channel
+                              dir
+                              pattern
+                              delay-ms
+                              file-change-delay-ms)
+        result-ch            (a/thread (doall (-> mt-and-c
+                                                  subject/channel
+                                                  chan->seq)))]
     (do-pretend-logging-with-rotation file-1
                                       (modify-lines-s "1:")
                                       sleep-ms)
-    (Thread/sleep 10000)
+    (Thread/sleep 4000)
     (let [file-2 (make-and-initialise-log-file
                   "test/_work-dir/plopplop-2.log")]
       (do-pretend-logging-with-rotation file-2

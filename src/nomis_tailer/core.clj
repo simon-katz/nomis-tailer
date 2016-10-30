@@ -65,7 +65,7 @@
                   files-and-last-mod-times))
     most-recent-file))
 
-(defn make-multi-tailer-and-channel [dir pattern delay-ms]
+(defn make-multi-tailer-and-channel [dir pattern delay-ms file-change-delay-ms]
   (let [out-ch     (a/chan)
         control-ch (a/chan)]
     (letfn [(get-most-recent-file []
@@ -82,17 +82,14 @@
                       (recur))))
                 t-and-c))]
       (a/go
-        (let [outer-delay-ms         1000 ; TODO OK? Make this an arg.
-              first-most-recent-file (get-most-recent-file)]
+        (let [first-most-recent-file (get-most-recent-file)]
           (let [first-t-and-c (when first-most-recent-file
                                 (new-t-and-c first-most-recent-file
                                              true))]
             (loop [most-recent-file first-most-recent-file
                    t-and-c          first-t-and-c]
-              (a/<! (a/timeout outer-delay-ms))
               (let [[v ch] (a/alts! [control-ch
-                                     (a/timeout 1000 ; TODO
-                                                )]
+                                     (a/timeout file-change-delay-ms)]
                                     :priority true)]
                 (if (= v :stop)
                   (when t-and-c

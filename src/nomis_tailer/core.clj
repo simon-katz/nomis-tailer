@@ -101,7 +101,7 @@
                                     :priority true)]
                 (if (= v :stop)
                   (when prev-t-and-c
-                    (close-tailer-and-channel! prev-t-and-c))
+                    (close! prev-t-and-c))
                   (let [most-recent-file     (get-most-recent-file)
                         new-file-to-process? (and most-recent-file
                                                   (not= most-recent-file
@@ -114,7 +114,7 @@
                             ;; Give time to finish tailing the previous file
                             ;; before closing the channel.
                             (a/<! (a/timeout file-change-delay-ms))
-                            (close-tailer-and-channel! prev-t-and-c))
+                            (close! prev-t-and-c))
                           (recur most-recent-file
                                  (new-t-and-c most-recent-file
                                               false))))))))))))

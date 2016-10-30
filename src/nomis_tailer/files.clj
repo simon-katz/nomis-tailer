@@ -1,6 +1,6 @@
 (ns nomis-tailer.files)
 
-(defn ^:private files-in-dir-matching-paqttern
+(defn ^:private files-in-dir-matching-pattern
   "A sequence of files in `dir` matching `pattern`."
   [dir pattern]
   (->> dir

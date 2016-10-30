@@ -4,6 +4,9 @@
   (:import (org.apache.commons.io.input Tailer
                                         TailerListener)))
 
+;;;; ___________________________________________________________________________
+;;;; ---- Implementation ----
+
 (defn ^:private tailer-listener [c]
   (reify TailerListener
     (init [this tailer]
@@ -27,8 +30,25 @@
                                  (tailer-listener ch)
                                  delay-ms
                                  from-end?)]
-    {::channel ch
+    {:type     :tailer-and-channel
+     ::channel ch
      ::tailer  tailer}))
+
+;;;; ___________________________________________________________________________
+;;;; ---- Generic stuff ----
+
+(defmulti channel
+  "Returns this tailer-and-channel's or multi-tailer-and-channel's channel.
+  Take from this to get lines from the file(s)."
+  :type)
+
+(defmulti close!
+  "Stops/closes this tailer-and-channel's Tailer and channel.
+  Also works for a multi-tailer-and-channel."
+  :type)
+
+;;;; ___________________________________________________________________________
+;;;; ---- tailer-and-channel ----
 
 (defn make-tailer-and-channel
   "Returns a so-called tailer-and-channel for `file` with the supplied
@@ -37,17 +57,17 @@
   [file delay-ms]
   (make-tailer-and-channel-impl file delay-ms true))
 
-(defn channel
-  "Returns this tailer-and-channel's channel -- take from this to get
-  lines from the file."
-  [t-and-c]
-  (::channel t-and-c))
+(defmethod channel :tailer-and-channel
+  [{:keys [::channel ::tailer]}]
+  channel)
 
-(defn close-tailer-and-channel!
-  "Stops/closes this tailer-and-channel's Tailer and channel."
+(defmethod close! :tailer-and-channel
   [{:keys [::channel ::tailer]}]
   (.stop tailer)
   (a/close! channel))
+
+;;;; ___________________________________________________________________________
+;;;; ---- multi-tailer-and-channel ----
 
 (defn make-multi-tailer-and-channel
   "Like `make-tailer-and-channel`, but looks for the most recent file in `dir`
@@ -64,7 +84,7 @@
                                                   delay-ms
                                                   first?)]
                 (a/go-loop []
-                  (let [v (a/<! (channel t-and-c))]
+                  (let [v (a/<! (::channel t-and-c))]
                     (when v
                       (a/>! out-ch v)
                       (recur))))
@@ -98,12 +118,15 @@
                           (recur most-recent-file
                                  (new-t-and-c most-recent-file
                                               false))))))))))))
-    {::channel out-ch
+    {:type        :multi-tailer-and-channel
+     ::channel    out-ch
      ::control-ch control-ch}))
 
-(defn close-multi-tailer-and-channel!
-  "Stops/closes this multi-tailer-and-channel's Tailer and channel."
-  [mt-and-c]
-  (a/>!! (::control-ch mt-and-c)
-         :stop)
-  (a/close! (::channel mt-and-c)))
+(defmethod channel :multi-tailer-and-channel
+  [{:keys [::channel ::control-ch]}]
+  channel)
+
+(defmethod close! :multi-tailer-and-channel
+  [{:keys [::channel ::control-ch]}]
+  (a/>!! control-ch :stop)
+  (a/close! channel))

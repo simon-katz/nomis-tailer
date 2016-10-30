@@ -35,7 +35,7 @@
 (defn channel [t-and-c]
   (::channel t-and-c))
 
-(defn close! [{:keys [::channel ::tailer]}]
+(defn close-tailer-and-channel! [{:keys [::channel ::tailer]}]
   (.stop tailer)
   (a/close! channel))
 
@@ -93,7 +93,7 @@
                                     :priority true)]
                 (if (= v :stop)
                   (when prev-t-and-c
-                    (close! prev-t-and-c))
+                    (close-tailer-and-channel! prev-t-and-c))
                   (let [most-recent-file     (get-most-recent-file)
                         new-file-to-process? (and most-recent-file
                                                   (not= most-recent-file
@@ -106,14 +106,14 @@
                             ;; Give time to finish tailing the previous file
                             ;; before closing the channel.
                             (a/<! (a/timeout file-change-delay-ms))
-                            (close! prev-t-and-c))
+                            (close-tailer-and-channel! prev-t-and-c))
                           (recur most-recent-file
                                  (new-t-and-c most-recent-file
                                               false))))))))))))
     {::channel out-ch
      ::control-ch control-ch}))
 
-(defn close-mt-and-c! [mt-and-c]
+(defn close-multi-tailer-and-channel! [mt-and-c]
   (a/>!! (::control-ch mt-and-c)
          :stop)
   (a/close! (::channel mt-and-c)))

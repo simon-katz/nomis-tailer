@@ -40,7 +40,7 @@
                                                subject/channel
                                                chan->seq)))]
     (do-pretend-logging-with-rotation file lines-s rollover-delay-ms)
-    (subject/close! t-and-c)
+    (subject/close-tailer-and-channel! t-and-c)
     (a/<!! result-ch))
   => ["1-1" "2-1" "3-1" "4-1" "5-1"
       "1-2" "2-2" "3-2" "4-2" "5-2"
@@ -75,7 +75,7 @@
                                           (modify-lines-s (str i "-"))
                                           rollover-delay-ms)
         (Thread/sleep filename-change-delay-ms)))
-    (subject/close-mt-and-c! mt-and-c)
+    (subject/close-multi-tailer-and-channel! mt-and-c)
     (a/<!! result-ch))
   => ["a-1-1" "a-2-1" "a-3-1" "a-4-1" "a-5-1"
       "a-1-2" "a-2-2" "a-3-2" "a-4-2" "a-5-2"

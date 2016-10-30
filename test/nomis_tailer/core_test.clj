@@ -2,7 +2,7 @@
   (:require [clojure.core.async :as a]
             [clojure.java.io :as io]
             [midje.sweet :refer :all]
-            [nomis-tailer.core :refer :all])
+            [nomis-tailer.core :as subject])
   (:import (java.io File)))
 
 (defn do-pretend-logging-with-rotation
@@ -23,11 +23,6 @@
    (when-let [v (a/<!! c)]
      (cons v (chan->seq c)))))
 
-(defn tailer-and-channel->seq [t-and-c]
-  (-> t-and-c
-      channel
-      chan->seq))
-
 (fact (let [delay-ms  100
             sleep-ms  (+ delay-ms 10)
             lines-s   [["I met" "her" "in a" "pool room"]
@@ -41,10 +36,12 @@
                         (io/make-parents f)
                         (spit f "this will be ignored this will be ignored this will be ignored this will be ignored\n")
                         f)               
-            t-and-c   (make-tailer-and-channel file delay-ms)
-            result-ch (a/thread (doall (tailer-and-channel->seq t-and-c)))]
+            t-and-c   (subject/make-tailer-and-channel file delay-ms)
+            result-ch (a/thread (doall (-> t-and-c
+                                           subject/channel
+                                           chan->seq)))]
         (do-pretend-logging-with-rotation file lines-s sleep-ms)
-        (close! t-and-c)
+        (subject/close! t-and-c)
         (a/<!! result-ch)
         => ["I met" "her" "in a" "pool room" "her name" "I didn't" "catch"
             "she" "looked" "like" "something special"]))

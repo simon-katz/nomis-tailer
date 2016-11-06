@@ -26,19 +26,19 @@ Add the following to your `ns` declaration:
 
 ### Tailing a Single File
 
-Use `tailer/make-tailer-and-channel` to create a `tailer-and-channel`.
+Use `tailer/make-single-file-tailer` to create a single-file-tailer.
 
 The tailing starts from the end of the file.
 
 Use `tailer/channel` to get a core.async channel to take from. The values taken
 will be successive lines from the file.
 
-Use `tailer/close!` to close a `tailer-and-channel`.
+Use `tailer/close!` to close a single-file-tailer.
 
 
 ### Tailing Using a File Pattern
 
-Use `tailer/make-multi-tailer-and-channel` to create a `multi-tailer-and-channel`.
+Use `tailer/make-multi-file-tailer` to create a multi-file-tailer.
 
 Looks for the most recent file in `dir` that matches `pattern` and looks
 for new files every `file-change-delay-ms`.
@@ -46,7 +46,7 @@ for new files every `file-change-delay-ms`.
 The tailing starts from the end of any current file, and includes the
 full content of subsequent files.
 
-Use `tailer/channel` and `tailer/close!` as for `tailer-and-channel`.
+Use `tailer/channel` and `tailer/close!` as for a single-file-tailer.
 
 
 ### More Detail

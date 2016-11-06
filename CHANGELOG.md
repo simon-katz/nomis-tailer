@@ -9,6 +9,11 @@ All notable changes to this project will be documented in this file. This change
 
 - (nothing)
 
+### Changed
+
+- Rename `make-tailer-and-channel` -> `make-single-file-tailer`.
+- Rename `make-multi-tailer-and-channel` -> `make-multi-file-tailer`.
+
 
 ### Diffs
 

@@ -24,13 +24,13 @@
     (^void handle [this ^Exception e]
      (throw e))))
 
-(defn ^:private make-tailer-and-channel-impl [file delay-ms from-end?]
+(defn ^:private make-single-file-tailer-impl [file delay-ms from-end?]
   (let [ch        (a/chan)
         tailer    (Tailer/create file
                                  (tailer-listener ch)
                                  delay-ms
                                  from-end?)]
-    {:type     :tailer-and-channel
+    {:type     :single-file-tailer
      ::channel ch
      ::tailer  tailer}))
 
@@ -38,78 +38,76 @@
 ;;;; ---- Generic stuff ----
 
 (defmulti channel
-  "Returns this tailer-and-channel's or multi-tailer-and-channel's channel.
+  "Returns this tailer's channel.
   Take from this to get lines from the file(s)."
   :type)
 
 (defmulti close!
-  "Stops/closes this tailer-and-channel's Tailer and channel.
-  Also works for a multi-tailer-and-channel."
+  "Closes this tailer's channel, and stops/closes implementation resources."
   :type)
 
 ;;;; ___________________________________________________________________________
-;;;; ---- tailer-and-channel ----
+;;;; ---- single-file-tailer ----
 
-(defn make-tailer-and-channel
-  "Returns a tailer-and-channel for `file`.
+(defn make-single-file-tailer
+  "Returns a single-file-tailer for `file`.
   The tailing starts from the end of the file.
   `delay-ms` is the delay between checks of the file for new content."
   [file delay-ms]
-  (make-tailer-and-channel-impl file delay-ms true))
+  (make-single-file-tailer-impl file delay-ms true))
 
-(defmethod channel :tailer-and-channel
+(defmethod channel :single-file-tailer
   [{:keys [::channel ::tailer]}]
   channel)
 
-(defmethod close! :tailer-and-channel
+(defmethod close! :single-file-tailer
   [{:keys [::channel ::tailer]}]
   (.stop tailer)
   (a/close! channel))
 
 ;;;; ___________________________________________________________________________
-;;;; ---- multi-tailer-and-channel ----
+;;;; ---- multi-file-tailer ----
 
-(defn make-multi-tailer-and-channel
-  "Like `make-tailer-and-channel`, but looks for the most recent file in `dir`
+(defn make-multi-file-tailer
+  "Like `make-single-file-tailer`, but looks for the most recent file in `dir`
   that matches `pattern`. Looks for new files every `new-file-check-frequency-ms`.
   The tailing starts from the end of any current file, and includes the
   full content of subsequent files.
-  Returns a multi-tailer-and-channel."
+  Returns a multi-file-tailer."
   ([dir pattern delay-ms new-file-check-frequency-ms]
-   (make-multi-tailer-and-channel dir
-                                  pattern
-                                  delay-ms
-                                  new-file-check-frequency-ms
-                                  delay-ms))
+   (make-multi-file-tailer dir
+                           pattern
+                           delay-ms
+                           new-file-check-frequency-ms
+                           delay-ms))
   ([dir pattern delay-ms new-file-check-frequency-ms delay-ms-to-finish-old-file]
    (let [out-ch     (a/chan)
          control-ch (a/chan)]
      (letfn [(get-most-recent-file []
                (files/most-recent-file-matching-pattern dir pattern))
-             (new-t-and-c [most-recent-file first?]
-               (let [t-and-c
-                     (make-tailer-and-channel-impl most-recent-file
-                                                   delay-ms
-                                                   first?)]
+             (new-tailer [most-recent-file first?]
+               (let [tailer (make-single-file-tailer-impl most-recent-file
+                                                          delay-ms
+                                                          first?)]
                  (a/go-loop []
-                   (let [v (a/<! (::channel t-and-c))]
+                   (let [v (a/<! (::channel tailer))]
                      (when v
                        (a/>! out-ch v)
                        (recur))))
-                 t-and-c))]
+                 tailer))]
        (a/go
          (let [first-most-recent-file (get-most-recent-file)]
-           (let [first-t-and-c (when first-most-recent-file
-                                 (new-t-and-c first-most-recent-file
-                                              true))]
+           (let [first-tailer (when first-most-recent-file
+                                (new-tailer first-most-recent-file
+                                            true))]
              (loop [prev-most-recent-file first-most-recent-file
-                    prev-t-and-c          first-t-and-c]
+                    prev-tailer           first-tailer]
                (let [[v ch] (a/alts! [control-ch
                                       (a/timeout new-file-check-frequency-ms)]
                                      :priority true)]
                  (if (= v :stop)
-                   (when prev-t-and-c
-                     (close! prev-t-and-c))
+                   (when prev-tailer
+                     (close! prev-tailer))
                    (let [most-recent-file     (get-most-recent-file)
                          new-file-to-process? (and most-recent-file
                                                    (not= most-recent-file
@@ -117,24 +115,24 @@
                      (if-not new-file-to-process?
                        ;; just leave things as they are
                        (recur prev-most-recent-file
-                              prev-t-and-c)
-                       (do (when prev-t-and-c
+                              prev-tailer)
+                       (do (when prev-tailer
                              ;; Give time to finish tailing the previous file
                              ;; before closing the channel.
                              (a/<! (a/timeout  delay-ms-to-finish-old-file))
-                             (close! prev-t-and-c))
+                             (close! prev-tailer))
                            (recur most-recent-file
-                                  (new-t-and-c most-recent-file
-                                               false))))))))))))
-     {:type        :multi-tailer-and-channel
+                                  (new-tailer most-recent-file
+                                              false))))))))))))
+     {:type        :multi-file-tailer
       ::channel    out-ch
       ::control-ch control-ch})))
 
-(defmethod channel :multi-tailer-and-channel
+(defmethod channel :multi-file-tailer
   [{:keys [::channel ::control-ch]}]
   channel)
 
-(defmethod close! :multi-tailer-and-channel
+(defmethod close! :multi-file-tailer
   [{:keys [::channel ::control-ch]}]
   (a/>!! control-ch :stop)
   (a/close! channel))

@@ -26,27 +26,27 @@
    (when-let [v (a/<!! c)]
      (cons v (chan->seq c)))))
 
-(fact "`make-tailer-and-channel` works"
+(fact "`make-single-file-tailer` works"
   (let [file-replacement-freq-ms 1000
         delay-ms                 50
         lines-s                  [["1-1" "2-1" "3-1" "4-1" "5-1"]
                                   ["1-2" "2-2" "3-2" "4-2" "5-2"]
                                   ["1-3" "2-3" "3-3" "4-3" "5-3"]]
         file                     (File. "test/_work-dir/single-filename-test.log")
-        t-and-c                  (subject/make-tailer-and-channel file
+        tailer                   (subject/make-single-file-tailer file
                                                                   delay-ms)
-        result-ch                (a/thread (doall (-> t-and-c
+        result-ch                (a/thread (doall (-> tailer
                                                       subject/channel
                                                       chan->seq)))]
     (Thread/sleep 100) ; avoid writing before we are ready to read
     (do-pretend-logging-with-file-replacement file lines-s file-replacement-freq-ms)
-    (subject/close! t-and-c)
+    (subject/close! tailer)
     (a/<!! result-ch))
   => ["1-1" "2-1" "3-1" "4-1" "5-1"
       "1-2" "2-2" "3-2" "4-2" "5-2"
       "1-3" "2-3" "3-3" "4-3" "5-3"])
 
-(fact "`make-multi-tailer-and-channel` works"
+(fact "`make-multi-file-tailer` works"
   (let [file-replacement-freq-ms    1000
         delay-ms                    50
         new-file-check-frequency-ms 300
@@ -61,13 +61,13 @@
                                            basic-lines-s))
         dir                         (File. "test/_work-dir")
         pattern                     #"multi-filename-test-.\.log"
-        mt-and-c                    (subject/make-multi-tailer-and-channel
+        tailer                      (subject/make-multi-file-tailer
                                      dir
                                      pattern
                                      delay-ms
                                      new-file-check-frequency-ms
                                      delay-ms-to-finish-old-file)
-        result-ch                   (a/thread (doall (-> mt-and-c
+        result-ch                   (a/thread (doall (-> tailer
                                                          subject/channel
                                                          chan->seq)))]
     (Thread/sleep 100) ; avoid writing before we are ready to read
@@ -76,7 +76,7 @@
         (do-pretend-logging-with-file-replacement file
                                                   (modify-lines-s (str i "-"))
                                                   file-replacement-freq-ms)))
-    (subject/close! mt-and-c)
+    (subject/close! tailer)
     (a/<!! result-ch))
   => ["a-1-1" "a-2-1" "a-3-1" "a-4-1" "a-5-1"
       "a-1-2" "a-2-2" "a-3-2" "a-4-2" "a-5-2"

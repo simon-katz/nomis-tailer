@@ -50,7 +50,7 @@
   (let [file-replacement-freq-ms    1000
         delay-ms                    50
         new-file-check-frequency-ms 300
-        filename-change-delay-ms    500
+        delay-ms-to-finish-old-file 300
         basic-lines-s               [["1-1" "2-1" "3-1" "4-1" "5-1"]
                                      ["1-2" "2-2" "3-2" "4-2" "5-2"]
                                      ["1-3" "2-3" "3-3" "4-3" "5-3"]]
@@ -65,7 +65,8 @@
                                      dir
                                      pattern
                                      delay-ms
-                                     new-file-check-frequency-ms)
+                                     new-file-check-frequency-ms
+                                     delay-ms-to-finish-old-file)
         result-ch                   (a/thread (doall (-> mt-and-c
                                                          subject/channel
                                                          chan->seq)))]

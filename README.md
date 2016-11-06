@@ -12,11 +12,9 @@ Similar to `tail -F` in some Unix's.
 
 ### Dependencies
 
-For a Leiningen project, use the following dependency:
+Dependency information is at this clickable badge:
 
-```
-[com.nomistech/nomis-tailer "0.1.0"]
-```
+[![Clojars Project](https://img.shields.io/clojars/v/com.nomistech/nomis-tailer.svg)](https://clojars.org/com.nomistech/nomis-tailer)
 
 Add the following to your `ns` declaration:
 

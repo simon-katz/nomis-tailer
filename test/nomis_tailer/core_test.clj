@@ -27,8 +27,8 @@
      (cons v (chan->seq c)))))
 
 (fact "`make-tailer-and-channel` works"
-  (let [delay-ms                 50
-        file-replacement-freq-ms 1000
+  (let [file-replacement-freq-ms 1000
+        delay-ms                 50
         lines-s                  [["1-1" "2-1" "3-1" "4-1" "5-1"]
                                   ["1-2" "2-2" "3-2" "4-2" "5-2"]
                                   ["1-3" "2-3" "3-3" "4-3" "5-3"]]
@@ -47,9 +47,9 @@
       "1-3" "2-3" "3-3" "4-3" "5-3"])
 
 (fact "`make-multi-tailer-and-channel` works"
-  (let [delay-ms                    50
+  (let [file-replacement-freq-ms    1000
+        delay-ms                    50
         new-file-check-frequency-ms 300
-        file-replacement-freq-ms    1000
         filename-change-delay-ms    500
         basic-lines-s               [["1-1" "2-1" "3-1" "4-1" "5-1"]
                                      ["1-2" "2-2" "3-2" "4-2" "5-2"]

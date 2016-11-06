@@ -14,12 +14,12 @@
   ;; (println "do-pretend-logging-with-file-replacement" (.getName f))
   (io/make-parents f)
   (doseq [lines lines-s]
-    (Thread/sleep file-replacement-freq-ms)
     (spit f "") ; replace
     (doseq [line lines]
       (spit f
             (str line "\n")
-            :append true))))
+            :append true))
+    (Thread/sleep file-replacement-freq-ms)))
 
 (defn chan->seq [c]
   (lazy-seq
@@ -39,7 +39,6 @@
                                                       subject/channel
                                                       chan->seq)))]
     (do-pretend-logging-with-file-replacement file lines-s file-replacement-freq-ms)
-    (Thread/sleep file-replacement-freq-ms)
     (subject/close! t-and-c)
     (a/<!! result-ch))
   => ["1-1" "2-1" "3-1" "4-1" "5-1"
@@ -74,7 +73,6 @@
         (do-pretend-logging-with-file-replacement file
                                                   (modify-lines-s (str i "-"))
                                                   file-replacement-freq-ms)))
-    (Thread/sleep file-replacement-freq-ms)
     (subject/close! mt-and-c)
     (a/<!! result-ch))
   => ["a-1-1" "a-2-1" "a-3-1" "a-4-1" "a-5-1"

@@ -51,10 +51,9 @@
 ;;;; ---- tailer-and-channel ----
 
 (defn make-tailer-and-channel
-  "Returns a so-called tailer-and-channel for `file` with the supplied
-  `delay-ms`.
+  "Returns a tailer-and-channel for `file`.
   The tailing starts from the end of the file.
-  See org.apache.commons.io.input.Tailer for details of `delay-ms`. "
+  `delay-ms` is the delay between checks of the file for new content."
   [file delay-ms]
   (make-tailer-and-channel-impl file delay-ms true))
 
@@ -75,7 +74,7 @@
   that matches `pattern`. Looks for new files every `file-change-delay-ms`.
   The tailing starts from the end of any current file, and includes the
   full content of subsequent files.
-  Returns a so-called multi-tailer-and-channel."
+  Returns a multi-tailer-and-channel."
   [dir pattern delay-ms file-change-delay-ms]
   (let [out-ch     (a/chan)
         control-ch (a/chan)]

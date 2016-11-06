@@ -46,28 +46,28 @@
       "1-3" "2-3" "3-3" "4-3" "5-3"])
 
 (fact "`make-multi-tailer-and-channel` works"
-  (let [delay-ms                 50
-        file-change-delay-ms     300
-        file-replacement-freq-ms 1000
-        filename-change-delay-ms 500
-        basic-lines-s            [["1-1" "2-1" "3-1" "4-1" "5-1"]
-                                  ["1-2" "2-2" "3-2" "4-2" "5-2"]
-                                  ["1-3" "2-3" "3-3" "4-3" "5-3"]]
-        modify-lines-s           (fn [prefix]
-                                   (map (fn [lines]
-                                          (map #(str prefix %)
-                                               lines))
-                                        basic-lines-s))
-        dir                      (File. "test/_work-dir")
-        pattern                  #"multi-filename-test-.\.log"
-        mt-and-c                 (subject/make-multi-tailer-and-channel
-                                  dir
-                                  pattern
-                                  delay-ms
-                                  file-change-delay-ms)
-        result-ch                (a/thread (doall (-> mt-and-c
-                                                      subject/channel
-                                                      chan->seq)))]
+  (let [delay-ms                    50
+        new-file-check-frequency-ms 300
+        file-replacement-freq-ms    1000
+        filename-change-delay-ms    500
+        basic-lines-s               [["1-1" "2-1" "3-1" "4-1" "5-1"]
+                                     ["1-2" "2-2" "3-2" "4-2" "5-2"]
+                                     ["1-3" "2-3" "3-3" "4-3" "5-3"]]
+        modify-lines-s              (fn [prefix]
+                                      (map (fn [lines]
+                                             (map #(str prefix %)
+                                                  lines))
+                                           basic-lines-s))
+        dir                         (File. "test/_work-dir")
+        pattern                     #"multi-filename-test-.\.log"
+        mt-and-c                    (subject/make-multi-tailer-and-channel
+                                     dir
+                                     pattern
+                                     delay-ms
+                                     new-file-check-frequency-ms)
+        result-ch                   (a/thread (doall (-> mt-and-c
+                                                         subject/channel
+                                                         chan->seq)))]
     (doseq [i ["a" "b" "c"]]
       (let [file (File. (str "test/_work-dir/multi-filename-test-" i ".log"))]
         (do-pretend-logging-with-file-replacement file

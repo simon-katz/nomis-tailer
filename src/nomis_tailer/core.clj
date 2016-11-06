@@ -71,11 +71,11 @@
 
 (defn make-multi-tailer-and-channel
   "Like `make-tailer-and-channel`, but looks for the most recent file in `dir`
-  that matches `pattern`. Looks for new files every `file-change-delay-ms`.
+  that matches `pattern`. Looks for new files every `new-file-check-frequency-ms`.
   The tailing starts from the end of any current file, and includes the
   full content of subsequent files.
   Returns a multi-tailer-and-channel."
-  [dir pattern delay-ms file-change-delay-ms]
+  [dir pattern delay-ms new-file-check-frequency-ms]
   (let [out-ch     (a/chan)
         control-ch (a/chan)]
     (letfn [(get-most-recent-file []
@@ -99,7 +99,7 @@
             (loop [prev-most-recent-file first-most-recent-file
                    prev-t-and-c          first-t-and-c]
               (let [[v ch] (a/alts! [control-ch
-                                     (a/timeout file-change-delay-ms)]
+                                     (a/timeout new-file-check-frequency-ms)]
                                     :priority true)]
                 (if (= v :stop)
                   (when prev-t-and-c
@@ -115,7 +115,7 @@
                       (do (when prev-t-and-c
                             ;; Give time to finish tailing the previous file
                             ;; before closing the channel.
-                            (a/<! (a/timeout file-change-delay-ms))
+                            (a/<! (a/timeout new-file-check-frequency-ms))
                             (close! prev-t-and-c))
                           (recur most-recent-file
                                  (new-t-and-c most-recent-file

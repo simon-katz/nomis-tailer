@@ -6,12 +6,12 @@
             [nomis-tailer.core :as subject])
   (:import (java.io File)))
 
-(defn do-pretend-logging-with-rotation
+(defn do-pretend-logging-with-file-replacement
   "Send lines to `f` in a manner that is similar to the way logging happens."
   ;; When making changes here, think about `rollover-delay-ms` and how it relates
   ;; to the underlying TailerListener's delay-ms.
   [f lines-s rollover-delay-ms]
-  ;; (println "do-pretend-logging-with-rotation" (.getName f))
+  ;; (println "do-pretend-logging-with-file-replacement" (.getName f))
   (io/make-parents f)
   (doseq [lines lines-s]
     (Thread/sleep rollover-delay-ms)
@@ -39,7 +39,7 @@
         result-ch         (a/thread (doall (-> t-and-c
                                                subject/channel
                                                chan->seq)))]
-    (do-pretend-logging-with-rotation file lines-s rollover-delay-ms)
+    (do-pretend-logging-with-file-replacement file lines-s rollover-delay-ms)
     (subject/close! t-and-c)
     (a/<!! result-ch))
   => ["1-1" "2-1" "3-1" "4-1" "5-1"
@@ -71,9 +71,9 @@
                                                       chan->seq)))]
     (doseq [i ["a" "b" "c"]]
       (let [file (File. (str "test/_work-dir/multi-filename-test-" i ".log"))]
-        (do-pretend-logging-with-rotation file
-                                          (modify-lines-s (str i "-"))
-                                          rollover-delay-ms)
+        (do-pretend-logging-with-file-replacement file
+                                                  (modify-lines-s (str i "-"))
+                                                  rollover-delay-ms)
         (Thread/sleep filename-change-delay-ms)))
     (subject/close! mt-and-c)
     (a/<!! result-ch))

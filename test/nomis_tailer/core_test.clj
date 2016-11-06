@@ -8,19 +8,19 @@
 
 (defn do-pretend-logging-with-file-replacement
   "Send lines to `f` in a manner that is similar to the way logging happens."
-  ;; When making changes here, think about `rollover-delay-ms` and how it relates
+  ;; When making changes here, think about `file-replacement-freq-ms` and how it relates
   ;; to the underlying TailerListener's delay-ms.
-  [f lines-s rollover-delay-ms]
+  [f lines-s file-replacement-freq-ms]
   ;; (println "do-pretend-logging-with-file-replacement" (.getName f))
   (io/make-parents f)
   (doseq [lines lines-s]
-    (Thread/sleep rollover-delay-ms)
+    (Thread/sleep file-replacement-freq-ms)
     (spit f "") ; rotate
     (doseq [line lines]
       (spit f
             (str line "\n")
             :append true)))
-  (Thread/sleep rollover-delay-ms))
+  (Thread/sleep file-replacement-freq-ms))
 
 (defn chan->seq [c]
   (lazy-seq
@@ -28,18 +28,18 @@
      (cons v (chan->seq c)))))
 
 (fact "`make-tailer-and-channel` works"
-  (let [delay-ms          50
-        rollover-delay-ms 1000
-        lines-s           [["1-1" "2-1" "3-1" "4-1" "5-1"]
-                           ["1-2" "2-2" "3-2" "4-2" "5-2"]
-                           ["1-3" "2-3" "3-3" "4-3" "5-3"]]
-        file              (File. "test/_work-dir/single-filename-test.log")
-        t-and-c           (subject/make-tailer-and-channel file
-                                                           delay-ms)
-        result-ch         (a/thread (doall (-> t-and-c
-                                               subject/channel
-                                               chan->seq)))]
-    (do-pretend-logging-with-file-replacement file lines-s rollover-delay-ms)
+  (let [delay-ms                 50
+        file-replacement-freq-ms 1000
+        lines-s                  [["1-1" "2-1" "3-1" "4-1" "5-1"]
+                                  ["1-2" "2-2" "3-2" "4-2" "5-2"]
+                                  ["1-3" "2-3" "3-3" "4-3" "5-3"]]
+        file                     (File. "test/_work-dir/single-filename-test.log")
+        t-and-c                  (subject/make-tailer-and-channel file
+                                                                  delay-ms)
+        result-ch                (a/thread (doall (-> t-and-c
+                                                      subject/channel
+                                                      chan->seq)))]
+    (do-pretend-logging-with-file-replacement file lines-s file-replacement-freq-ms)
     (subject/close! t-and-c)
     (a/<!! result-ch))
   => ["1-1" "2-1" "3-1" "4-1" "5-1"
@@ -49,7 +49,7 @@
 (fact "`make-multi-tailer-and-channel` works"
   (let [delay-ms                 50
         file-change-delay-ms     300
-        rollover-delay-ms        1000
+        file-replacement-freq-ms 1000
         filename-change-delay-ms 500
         basic-lines-s            [["1-1" "2-1" "3-1" "4-1" "5-1"]
                                   ["1-2" "2-2" "3-2" "4-2" "5-2"]
@@ -73,8 +73,7 @@
       (let [file (File. (str "test/_work-dir/multi-filename-test-" i ".log"))]
         (do-pretend-logging-with-file-replacement file
                                                   (modify-lines-s (str i "-"))
-                                                  rollover-delay-ms)
-        (Thread/sleep filename-change-delay-ms)))
+                                                  file-replacement-freq-ms)))
     (subject/close! mt-and-c)
     (a/<!! result-ch))
   => ["a-1-1" "a-2-1" "a-3-1" "a-4-1" "a-5-1"

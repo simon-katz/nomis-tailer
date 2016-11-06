@@ -15,7 +15,7 @@
   (io/make-parents f)
   (doseq [lines lines-s]
     (Thread/sleep file-replacement-freq-ms)
-    (spit f "") ; rotate
+    (spit f "") ; replace
     (doseq [line lines]
       (spit f
             (str line "\n")

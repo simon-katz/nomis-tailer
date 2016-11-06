@@ -38,6 +38,7 @@
         result-ch                (a/thread (doall (-> t-and-c
                                                       subject/channel
                                                       chan->seq)))]
+    (Thread/sleep 100) ; avoid writing before we are ready to read
     (do-pretend-logging-with-file-replacement file lines-s file-replacement-freq-ms)
     (subject/close! t-and-c)
     (a/<!! result-ch))
@@ -68,6 +69,7 @@
         result-ch                   (a/thread (doall (-> mt-and-c
                                                          subject/channel
                                                          chan->seq)))]
+    (Thread/sleep 100) ; avoid writing before we are ready to read
     (doseq [i ["a" "b" "c"]]
       (let [file (File. (str "test/_work-dir/multi-filename-test-" i ".log"))]
         (do-pretend-logging-with-file-replacement file

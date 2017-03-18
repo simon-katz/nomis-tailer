@@ -7,6 +7,12 @@ Good for tailing log files.
 Similar to `tail -F` in some Unix's.
 
 
+
+You have this in core.clj:
+;;;; FIXME Need to fix doc strings. Maybe the README also.
+
+
+
 ## Usage
 
 

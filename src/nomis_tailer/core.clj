@@ -37,6 +37,10 @@
 ;;;; ___________________________________________________________________________
 ;;;; ---- Generic stuff ----
 
+
+;;;; FIXME Need to fix doc strings. Maybe the README also.
+
+
 (defmulti channel
   "Returns this tailer's channel.
   Take from this to get lines from the file(s)."

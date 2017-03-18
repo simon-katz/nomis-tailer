@@ -79,7 +79,7 @@
                            pattern
                            delay-ms
                            new-file-check-frequency-ms
-                           delay-ms))
+                           1000))
   ([dir pattern delay-ms new-file-check-frequency-ms delay-ms-to-finish-old-file]
    (let [out-ch     (a/chan)
          control-ch (a/chan)]
